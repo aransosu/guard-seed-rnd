@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>Seed 02-C5 — 강타 접점 충격 폴리시</title>
+<title>Seed 02-C7 — 3연타 마무리 폴리시</title>
 <style>
   :root{
     --bg:#0e1017; --bg2:#151823; --line:#2a2f3d;
@@ -272,6 +272,26 @@
     60%{transform:translate(-50%,-50%) scale(.97);}
     78%{transform:translate(-50%,-50%) scale(1.02);}
     100%{transform:translate(-50%,-50%) scale(1); box-shadow:0 0 20px rgba(127,200,255,.28);}}
+  /* C6: PARRY 전용 청록 반사 파동 + 사선 슬래시 (heavy 주황/PERFECT 금빛과 분리) */
+  #faParryWave{position:absolute; left:50%; top:42%; transform:translate(-50%,-50%); z-index:5; width:80px; height:80px; border-radius:50%; pointer-events:none; opacity:0; border:2.5px solid rgba(95,168,255,.82);}
+  #faParryWave.go{animation:parryWave .32s cubic-bezier(.15,.7,.3,1);}
+  @keyframes parryWave{0%{opacity:0; width:50px; height:50px; border-width:3px;}15%{opacity:1;}100%{opacity:0; width:200px; height:200px; border-width:.5px;}}
+  #faParryWave::after{content:""; position:absolute; left:50%; top:50%; width:3px; height:0; background:linear-gradient(180deg,transparent,var(--parry),transparent); transform:translate(-50%,-50%) rotate(35deg); border-radius:2px;}
+  #faParryWave.go::after{animation:parrySlash .3s ease-out;}
+  @keyframes parrySlash{0%{height:0; opacity:0;}30%{height:96px; opacity:.95;}100%{height:96px; opacity:0;}}
+  /* C6: PARRY 시 선택 전선 적이 살짝 뒤로 튕김(시각만) */
+  .foe.knock{animation:foeKnock .32s ease-out;}
+  @keyframes foeKnock{0%{transform:translate(50%,-50%);}30%{transform:translate(82%,-50%) scale(1.04); filter:drop-shadow(0 0 6px rgba(95,168,255,.85));}100%{transform:translate(50%,-50%);}}
+  /* C7: 3연타 마무리 보호막 — 바깥에서 안으로 "딱 닫힘"(흰/연청, PARRY 청록·PERFECT 금빛·강타 주황과 분리) */
+  #faTripleWave{position:absolute; left:50%; top:42%; transform:translate(-50%,-50%); z-index:5; width:80px; height:80px; border-radius:50%; pointer-events:none; opacity:0; border:2.5px solid rgba(210,235,255,.9);}
+  #faTripleWave.go{animation:tripleWave .34s cubic-bezier(.2,.7,.3,1);}
+  @keyframes tripleWave{0%{opacity:0; width:185px; height:185px; border-width:1px;}28%{opacity:.9;}100%{opacity:0; width:68px; height:68px; border-width:4px;}}
+  #faTripleWave.full{border-color:rgba(235,248,255,.98); box-shadow:0 0 22px rgba(200,230,255,.6);}
+  #faTripleWave.full.go{animation:tripleWaveFull .4s cubic-bezier(.2,.7,.3,1);}
+  @keyframes tripleWaveFull{0%{opacity:0; width:212px; height:212px; border-width:1px;}24%{opacity:1;}100%{opacity:0; width:64px; height:64px; border-width:5px;}}
+  /* C7: 풀콤보 시 선택 전선 적이 살짝 멈칫(시각만, 흰/연청) */
+  .foe.knock-finish{animation:foeKnockFinish .3s ease-out;}
+  @keyframes foeKnockFinish{0%{transform:translate(50%,-50%);}35%{transform:translate(72%,-50%) scale(1.03); filter:drop-shadow(0 0 6px rgba(210,235,255,.9));}100%{transform:translate(50%,-50%);}}
   .hidden{display:none;}
 </style>
 </head>
@@ -315,6 +335,8 @@
         <div class="fa-incoming" id="faIncoming"></div>
         <div class="fa-target" id="faTarget"><div class="tcore"></div><div class="tpulse"></div></div>
         <div id="faHeavyWave"></div>
+        <div id="faParryWave"></div>
+        <div id="faTripleWave"></div>
         <div class="fa-shield" id="faShield"><img id="faHeroImg" alt="방패 용사"></div>
       </div>
       <div class="fa-crack" id="faCrack"><b style="transform:translate(-50%,0) rotate(18deg)"></b><b style="transform:translate(-50%,0) rotate(-26deg)"></b><b style="transform:translate(-50%,0) rotate(62deg)"></b><b style="transform:translate(-50%,0) rotate(-70deg)"></b></div>
@@ -346,8 +368,8 @@
       <div class="poseprev"><img id="devPoseImg" alt="포즈 미리보기"></div>
       <div class="posebtns" id="poseBtns"></div></div>
     <div class="ptip">패널을 열면 일시정지. 재개하면 멈춘 지점부터 점프 없이 이어져.<br>두 배율 <b>1.00×</b>가 <b>Nara PASS Baseline(C4)</b> — 바꿔 실험해도 <b>↩ C4 PASS 기준</b>으로 복귀.</div>
-    <div class="lockline">🔒 C4 PASS baseline locked · <b>C5</b> 강타 접점 충격</div>
-    <div class="ctrl" style="margin-top:6px"><button class="btn toggle on" id="heavyToggle">강타 충격 ON</button></div>
+    <div class="lockline">🔒 C4 PASS baseline · <b>C5</b> 강타 · <b>C6</b> 패링 · <b>C7</b> 3연타 마무리</div>
+    <div class="ctrl" style="margin-top:6px; display:flex; gap:6px; flex-wrap:wrap"><button class="btn toggle on" id="heavyToggle">강타 충격 ON</button><button class="btn toggle on" id="parryToggle">패링 보상 ON</button><button class="btn toggle on" id="tripleToggle">3연타 마무리 ON</button></div>
     <div class="p-foot">
       <button class="btn" id="defBtn">↩ C4 PASS 기준</button>
       <button class="btn go" id="closeBtn">▶ 재개</button>
@@ -572,6 +594,8 @@ const HERO_SPRITES={
     $("faShield").classList.remove("guard","parry","perfect","broken");
     $("faTarget").classList.remove("tense","r-perfect","r-parry","r-guard","r-miss","r-heavy-guard");
     $("faHeavyWave").classList.remove("go","gold","miss");
+    $("faParryWave").classList.remove("go");
+    $("faTripleWave").classList.remove("go","full");
     $("faCrack").classList.remove("show");
     $("faCombo").style.opacity="0";
     setHeroPose("hero_prep");               // 진입 순간 준비 자세(hero_prep), prep 후 guard
@@ -592,6 +616,8 @@ const HERO_SPRITES={
     $("faIncoming").innerHTML="";
     $("faTarget").classList.remove("tense","r-perfect","r-parry","r-guard","r-miss","r-heavy-guard");
     $("faHeavyWave").classList.remove("go","gold","miss");
+    $("faParryWave").classList.remove("go");
+    $("faTripleWave").classList.remove("go","full");
     $("faCrack").classList.remove("show");
     frontAction=null;
   }
@@ -611,7 +637,7 @@ const HERO_SPRITES={
     h.resolved=true; h.judgment=j;
     stats[j]=(stats[j]||0)+1;
     if(j!=="PERFECT" && j!=="PARRY"){ if(frontAction) frontAction.comboOK=false; }
-    if(h.el){ h.el.classList.remove("tense"); h.el.style.opacity="0"; h.el.style.transform="translate(-50%,-50%) scale(.4)"; }
+    if(h.el){ h.el.classList.remove("tense"); h.el.style.opacity="0"; h.el.style.transform = j==="PARRY" ? "translate(-50%,-50%) scale(1.6)" : "translate(-50%,-50%) scale(.4)"; }   // PARRY=바깥 튕김(흘림), 그 외=안쪽 수축(불변)
     showJudge(j);
     reactGuard(j, h);
     settleFrontIfDone();
@@ -637,8 +663,13 @@ const HERO_SPRITES={
     else if(success){ healLane(l, 6); pushEnemiesBack(l, 8); }
     else { pushEnemiesBack(l, -6); shakeAllies(l); }   // 실패 = 적 전진 + 아군 흔들림
     let kind = perfectAll?"perfect":(allBlocked?"parry":(success?"saved":"miss"));
+    if(kind==="parry") knockbackEnemies(l);   // PARRY 되밀기 가시화(시각만, 수치 불변)
     laneResult(l, kind);
-    if(frontAction.hits.length>=3 && frontAction.comboOK){ showCombo(perfectAll?"PERFECT COMBO!":"COMBO!"); setHeroPose("hero_chain_guard"); holdReturn(POSE_HOLD.chain_guard); }   // 연속 방어 보상
+    if(frontAction.hits.length>=3){
+      const lastOk = frontAction.hits[frontAction.hits.length-1].judgment!=="MISS";
+      if(frontAction.comboOK){ showCombo(perfectAll?"PERFECT COMBO!":"COMBO!"); setHeroPose("hero_chain_guard"); holdReturn(POSE_HOLD.chain_guard); finishKnockEnemies(l); playTripleFinishAccent(true); }   // 풀콤보: chain_guard + 마무리 보호막(흰/연청)
+      else if(lastOk){ playTripleFinishAccent(false); }                                                                                                                            // 마지막 타 성공(풀콤보 아님): 접점 마무리만
+    }
     if(perfectAll||success){ stats.saved++; } else { stats.hit++; }
     updateLaneVisual(l);
     const holdLeft = Math.max(0, poseReturnAt - gameNow());
@@ -691,6 +722,30 @@ const HERO_SPRITES={
     else if(kind==="MISS") w.classList.add("miss");    // 붉은 깨짐
     w.classList.add("go");                             // 둔탁 충격파 1회(순수 CSS — 게임 시계/일시정지/히트스톱과 독립)
   }
+  // ===== C6: PARRY 보상 (청록 반사 + 선택 전선 되밀기) — PARRY에만 호출 =====
+  let parryRewardOn=true;   // 기본 ON. 끄면 C5와 동일
+  function playParryRewardAccent(){
+    if(!parryRewardOn) return;
+    const w=$("faParryWave"); if(!w) return;
+    w.classList.remove("go"); void w.offsetWidth; w.classList.add("go");   // 청록 반사 파동 1회(순수 CSS — 시계/일시정지/히트스톱 독립)
+  }
+  function knockbackEnemies(l){   // PARRY 되밀기 가시화(시각만 — pushEnemiesBack 수치는 baseline 그대로)
+    if(!parryRewardOn || !l) return;
+    l.enemies.forEach(e=>{ e.el.classList.remove("knock"); void e.el.offsetWidth; e.el.classList.add("knock"); });
+  }
+  // ===== C7: 3연타 마무리 강조 (마지막 타 성공/풀콤보에만 호출 — 흰/연청 보호 계열) =====
+  let tripleFinishOn=true;   // 기본 ON. 끄면 C6과 동일
+  function playTripleFinishAccent(full){
+    if(!tripleFinishOn) return;
+    const w=$("faTripleWave"); if(!w) return;
+    w.classList.remove("go","full"); void w.offsetWidth;
+    if(full) w.classList.add("full");   // 풀콤보면 더 선명한 보호막
+    w.classList.add("go");              // 접점 보호막 "딱 닫힘" 1회(순수 CSS — 시계/일시정지/히트스톱 독립)
+  }
+  function finishKnockEnemies(l){   // 풀콤보 되밀기 가시화(시각만, 수치 불변)
+    if(!tripleFinishOn || !l) return;
+    l.enemies.forEach(e=>{ e.el.classList.remove("knock-finish"); void e.el.offsetWidth; e.el.classList.add("knock-finish"); });
+  }
   function reactGuard(kind, h){
     const s=$("faShield"), tg=$("faTarget"), fa=$("front");
     s.classList.remove("guard","parry","counter","perfect","broken","heavy"); void s.offsetWidth;
@@ -698,7 +753,7 @@ const HERO_SPRITES={
     fa.classList.remove("flash-perfect","shake-soft","shake-hard");
     const heavy = !!(h && h.big);
     if(kind==="PERFECT"){ s.classList.add("perfect"); setHeroPose("hero_perfect"); tg.classList.add("r-perfect"); void fa.offsetWidth; fa.classList.add("flash-perfect"); fa.classList.add(heavy?"shake-hard":"shake-soft"); applyHitstop(HITSTOP.PERFECT); holdReturn(POSE_HOLD.perfect); if(heavy) playHeavyContactAccent("PERFECT"); }   // 기분좋은 강한 충돌(강타면 무게 살짝)
-    else if(kind==="PARRY"){ s.classList.add("counter"); setHeroPose("hero_counter"); tg.classList.add("r-parry"); applyHitstop(HITSTOP.PARRY); holdReturn(POSE_HOLD.counter); }   // 튕김 보상 — 중앙 유지(왼쪽 잔여물 정리)
+    else if(kind==="PARRY"){ s.classList.add("counter"); setHeroPose("hero_counter"); tg.classList.add("r-parry"); applyHitstop(HITSTOP.PARRY); holdReturn(POSE_HOLD.counter); playParryRewardAccent(); }   // 튕김 보상 + 청록 반사(중앙 유지, heavy 주황과 분리)
     else if(kind==="GUARD"){
       if(heavy){ s.classList.add("heavy"); setHeroPose("hero_heavy_guard"); fa.classList.add("shake-soft"); applyHitstop(HITSTOP.GUARD_HEAVY); holdReturn(POSE_HOLD.heavy_guard); if(heavyAccentOn){ tg.classList.add("r-heavy-guard"); playHeavyContactAccent("GUARD"); } else { tg.classList.add("r-guard"); } }   // 강타: 버팀(baseline) + accent ON이면 접점 잔충격(쿠웅), OFF면 C4B와 동일
       else { tg.classList.add("r-guard"); s.classList.add("guard"); setHeroPose("hero_light_guard"); applyHitstop(HITSTOP.GUARD); holdReturn(POSE_HOLD.light_guard); } }                                                                              // 일반: C4B 그대로(불변)
@@ -820,6 +875,8 @@ const HERO_SPRITES={
   $("resetBtn").onclick=()=>fullReset();
 
   function syncHeavyToggle(){ const b=$("heavyToggle"); if(b){ b.textContent="강타 충격 "+(heavyAccentOn?"ON":"OFF"); b.classList.toggle("on", heavyAccentOn); } }
+  function syncParryToggle(){ const b=$("parryToggle"); if(b){ b.textContent="패링 보상 "+(parryRewardOn?"ON":"OFF"); b.classList.toggle("on", parryRewardOn); } }
+  function syncTripleToggle(){ const b=$("tripleToggle"); if(b){ b.textContent="3연타 마무리 "+(tripleFinishOn?"ON":"OFF"); b.classList.toggle("on", tripleFinishOn); } }
   function pushSliders(){
     $("sTele").value=T.teleScale; $("vTele").textContent=T.teleScale.toFixed(2)+"×";
     $("sGap").value=T.threatGap;  $("vGap").textContent=(T.threatGap/1000).toFixed(1)+"s";
@@ -836,8 +893,10 @@ const HERO_SPRITES={
   $("sStep").oninput=e=>{ T.tripleStep=parseInt(e.target.value); $("vStep").textContent=T.tripleStep+"ms"; };
   $("sHit").oninput=e=>{ T.hitstopScale=parseFloat(e.target.value); $("vHit").textContent=T.hitstopScale.toFixed(2)+"×"; };
   $("sHold").oninput=e=>{ T.poseHoldScale=parseFloat(e.target.value); $("vHold").textContent=T.poseHoldScale.toFixed(2)+"×"; };
-  $("defBtn").onclick=()=>{ Object.assign(T,DEFAULTS); heavyAccentOn=true; syncHeavyToggle(); pushSliders(); };   // C4 PASS baseline 복귀(배율 1.00x + 강타 accent ON)
+  $("defBtn").onclick=()=>{ Object.assign(T,DEFAULTS); heavyAccentOn=true; parryRewardOn=true; tripleFinishOn=true; syncHeavyToggle(); syncParryToggle(); syncTripleToggle(); pushSliders(); };   // C4 PASS baseline 복귀(배율 1.00x + 강타/패링/3연타 accent ON)
   $("heavyToggle").onclick=()=>{ heavyAccentOn=!heavyAccentOn; syncHeavyToggle(); };
+  $("parryToggle").onclick=()=>{ parryRewardOn=!parryRewardOn; syncParryToggle(); };
+  $("tripleToggle").onclick=()=>{ tripleFinishOn=!tripleFinishOn; syncTripleToggle(); };
 
   // ===== 리셋 / 부트 =====
   function fullReset(){
@@ -873,7 +932,7 @@ const HERO_SPRITES={
   }
 
   function boot(){
-    buildLanes(); bindInput(); pushSliders(); buildPoseDev(); syncHeavyToggle(); fullReset();
+    buildLanes(); bindInput(); pushSliders(); buildPoseDev(); syncHeavyToggle(); syncParryToggle(); syncTripleToggle(); fullReset();
     requestAnimationFrame(render);
     window.addEventListener("resize", ()=>{});
   }
@@ -895,6 +954,10 @@ const HERO_SPRITES={
     getBaseline:()=>({ poseHold:POSE_HOLD_BASELINE, hitstop:HITSTOP_BASELINE, labScale:LAB_SCALE_BASELINE, current:{ hitstopScale:T.hitstopScale, poseHoldScale:T.poseHoldScale } }),
     isHeavyAccent:()=>heavyAccentOn,
     setHeavyAccent:(v)=>{ heavyAccentOn=!!v; syncHeavyToggle(); },
+    isParryReward:()=>parryRewardOn,
+    setParryReward:(v)=>{ parryRewardOn=!!v; syncParryToggle(); },
+    isTripleFinish:()=>tripleFinishOn,
+    setTripleFinish:(v)=>{ tripleFinishOn=!!v; syncTripleToggle(); },
     listPoses:()=>Object.keys(HERO_SPRITES),
     previewPose,
     setHeroPose:(k)=>setHeroPose(k),
